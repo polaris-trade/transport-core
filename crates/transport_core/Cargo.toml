@@ -15,7 +15,9 @@ path = "src/lib.rs"
 
 [dependencies]
 thiserror = { workspace = true }
+serde = { workspace = true }
 
 [dev-dependencies]
 mockall = { workspace = true }
 rstest = { workspace = true }
+serde_json = { workspace = true }
