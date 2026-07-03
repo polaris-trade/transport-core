@@ -1,6 +1,6 @@
 # transport_core
 
-Zero-I/O leaf crate holding the `Transport` trait, `BufferPool` contract, shared `TransportError`, and config primitives for the Polaris networking stack. Every backend (`transport-tokio`, `transport-mio`, and future `transport-*`) and every protocol client (`client-moldudp`, `client-soupbintcp`) depends on this crate only.
+Zero-I/O core crate holding the `Transport` trait, `BufferPool` contract, shared `TransportError`, and config primitives. Every backend (`transport-tokio`, `transport-mio`, and future `transport-*`) and every protocol client (`client-moldudp`, `client-soupbintcp`) depends on this crate only.
 
 ## Scope
 

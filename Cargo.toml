@@ -12,7 +12,7 @@ license = "MIT OR Apache-2.0"
 
 [workspace.dependencies]
 # Internal deps — add path-based entries as new members land under crates/*:
-# my-crate = { path = "crates/my-crate" }
+transport_core = { path = "crates/transport_core" }
 
 # External deps — minimal, opinionated defaults. Add or remove freely.
 anyhow = "1.0.103"

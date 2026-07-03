@@ -10,6 +10,12 @@ Zero-I/O leaf crate holding the `Transport` trait, `BufferPool` contract, shared
 
 [[crates/transport_core/src/transport.rs#UdpTransport]] extends `Transport` with `join_multicast` + `send_to`. TCP-only backends skip it. [[crates/transport_core/src/transport.rs#MulticastInterface]] unifies IPv4 interface address + IPv6 scope id.
 
+## Extension traits
+
+[[crates/transport_core/src/ext.rs#PoolAccess]] exposes a backend's `BufferPool` under `type Pool: BufferPool`. Protocol receivers read from `T::pool()` to reserve slabs before recv.
+
+[[crates/transport_core/src/ext.rs#TransportBind]] holds the async constructors: `bind_udp(bind, rx, ring, batch)` and `connect_tcp(bind, ring)`. Split from `Transport` because construction is orthogonal to the running transport's poll/send loop, and TCP-only backends skip UDP-only fields cleanly.
+
 ## BufferPool contract
 
 [[crates/transport_core/src/pool.rs#BufferPool]] is the owned-handle pool trait. `Slab` is `AsRef<[u8]> + Send + 'static` so it crosses `.await` points and lives in reassembler slots. `acquire` returns `None` at saturation for backpressure.
