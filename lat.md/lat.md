@@ -2,6 +2,20 @@
 
 Zero-I/O leaf crate holding the `Transport` trait, `BufferPool` contract, shared error type, and config primitives. Every backend and every protocol client depends on this crate only.
 
+## Transport trait
+
+[[crates/transport_core/src/transport.rs#Transport]] is the trait every backend implements: `poll_event` returns `Poll<Self::Event>`, `next_frame` yields a borrowed `Self::Frame<'_>` (per-call type borrowed from `&self`), `send` is async. Protocol crates stay generic over `T: Transport`.
+
+[[crates/transport_core/src/transport.rs#AsPayload]] is the shape protocol code consumes from a frame: `payload()`, `sequence()`, `stream_id()`. Backend frames implement it; protocol frames re-implement it after wire parsing sets sequence + stream_id.
+
+[[crates/transport_core/src/transport.rs#UdpTransport]] extends `Transport` with `join_multicast` + `send_to`. TCP-only backends skip it. [[crates/transport_core/src/transport.rs#MulticastInterface]] unifies IPv4 interface address + IPv6 scope id.
+
+## BufferPool contract
+
+[[crates/transport_core/src/pool.rs#BufferPool]] is the owned-handle pool trait. `Slab` is `AsRef<[u8]> + Send + 'static` so it crosses `.await` points and lives in reassembler slots. `acquire` returns `None` at saturation for backpressure.
+
+[[crates/transport_core/src/pool.rs#SharedPool]] is the `Arc<P>` alias for the common receiver pattern where one pool serves multiple transport instances.
+
 ## Error primitive
 
 [[crates/transport_core/src/error.rs#TransportError]] is the shared error type backends map their I/O and pool failures into. Protocol crates wrap it via `#[from]` in their own error enums so callers can match by kind.
