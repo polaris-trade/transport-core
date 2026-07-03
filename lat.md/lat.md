@@ -1,6 +1,6 @@
 # transport-core
 
-Zero-I/O leaf crate holding the `Transport` trait, `BufferPool` contract, shared error type, and config primitives. Every backend and every protocol client depends on this crate only.
+Core crate holding the `Transport` trait, `BufferPool` contract, shared error type, and config primitives. No I/O syscalls happen here; every backend and every protocol client depends on this crate only.
 
 ## Transport trait
 
