@@ -2,6 +2,16 @@
 
 Core crate holding the `Transport` trait, `BufferPool` contract, shared error type, and config primitives. No I/O syscalls happen here; every backend and every protocol client depends on this crate only.
 
+## Testing harness (feature-gated)
+
+Feature `testing` exposes [[crates/transport_core/src/testing/conformance.rs#run_conformance_suite]] plus [[crates/transport_core/src/testing/mock_peer.rs#MockPeer]]. Every backend runs the same suite so failures line up 1:1 across CI dashboards.
+
+[[crates/transport_core/src/testing/conformance.rs#ConformanceReport]] holds `passed` + `failed` case labels. [[crates/transport_core/src/testing/conformance.rs#ConformanceCase]] enumerates the stable case names.
+
+[[crates/transport_core/src/testing/mock_peer.rs#MockPeer]] binds a real `127.0.0.1:0` socket (kind picked by [[crates/transport_core/src/testing/mock_peer.rs#MockKind]]) and drives a scripted [[crates/transport_core/src/testing/mock_peer.rs#MockAction]] list: send mock MoldUDP data/heartbeat, send SoupBinTCP frame, read + assert client-written bytes, sleep. `drop_rate` + `jitter` fields inject synthetic loss/latency.
+
+[[crates/transport_core/src/testing/mock_peer.rs#MockRunReport]] returns `actions_completed`, `bytes_sent`, `bytes_dropped_synthetic` counters. [[crates/transport_core/src/testing/mock_peer.rs#MockPeerError]] carries structured failures: bind, I/O, missing UDP target, unmet expect assertions.
+
 ## Transport trait
 
 [[crates/transport_core/src/transport.rs#Transport]] is the trait every backend implements: `poll_event` returns `Poll<Self::Event>`, `next_frame` yields a borrowed `Self::Frame<'_>` (per-call type borrowed from `&self`), `send` is async. Protocol crates stay generic over `T: Transport`.

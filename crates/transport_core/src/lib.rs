@@ -6,6 +6,9 @@ pub mod ext;
 pub mod pool;
 pub mod transport;
 
+#[cfg(feature = "testing")]
+pub mod testing;
+
 pub use config::{
     AffinityConfig, BatchConfig, BindConfig, HugepageSize, RecvBufConfig, RingConfig,
 };

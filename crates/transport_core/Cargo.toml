@@ -20,8 +20,15 @@ path = "src/lib.rs"
 serde = { workspace = true }
 # Backend + protocol crates wrap `TransportError` via `#[from]`.
 thiserror = { workspace = true }
+# `testing` feature pulls tokio for MockPeer sockets + fastrand for drop/jitter.
+tokio = { workspace = true, features = ["rt-multi-thread", "net", "time", "sync", "io-util", "macros"], optional = true }
+fastrand = { version = "2.1.2", optional = true }
+
+[features]
+default = []
+testing = ["dep:tokio", "dep:fastrand"]
 
 [dev-dependencies]
 serde_json = { workspace = true }
-# `#[tokio::test]` drives async trait-shape checks.
-tokio = { workspace = true, features = ["macros", "rt"] }
+# `#[tokio::test]` drives async trait-shape + conformance checks.
+tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread", "net", "time"] }
