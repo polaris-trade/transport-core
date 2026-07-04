@@ -11,8 +11,12 @@ pub mod testing;
 
 pub use config::{
     AffinityConfig, BatchConfig, BindConfig, HugepageSize, RecvBufConfig, RingConfig,
+    SendBufConfig, TimestampMode,
 };
 pub use error::TransportError;
 pub use ext::{PoolAccess, TransportBind};
 pub use pool::{BufferPool, SharedPool};
-pub use transport::{AsPayload, MulticastInterface, Transport, UdpTransport};
+pub use transport::{
+    AsPayload, MulticastInterface, Timestamp, TimestampSource, TimestampedPayload, Transport,
+    UdpTransport,
+};
