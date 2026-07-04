@@ -12,6 +12,10 @@ git_tag_name = "{{ package }}-v{{ version }}"
 git_release_enable = true
 git_release_name = "{{ package }} v{{ version }}"
 
+# Scoped title so the workspace `pr-title` gate accepts it and the release
+# workflow can key its `release` job off the "chore(release)" prefix.
+pr_name = "chore(release): v{{ version }}"
+
 # Do NOT publish to crates.io by default. Caller workflow gates this via input.
 publish = false
 
@@ -46,6 +50,10 @@ body = """
 - {% if commit.scope %}*({{ commit.scope }})* {% endif %}\
     {{ commit.message | upper_first }}\
     {% if commit.links %} ({% for link in commit.links %}[{{ link.text }}]({{ link.href }}){% if not loop.last %}, {% endif %}{% endfor %}){% endif %}
+{%- if commit.body %}
+
+{{ commit.body | trim }}
+{%- endif %}
 {% endfor %}
 {% endfor %}
 """
