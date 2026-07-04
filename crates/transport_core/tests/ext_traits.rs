@@ -7,7 +7,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::task::{Context, Poll};
 use transport_core::{
     AsPayload, BatchConfig, BindConfig, BufferPool, PoolAccess, RecvBufConfig, RingConfig,
-    Transport, TransportBind, TransportError,
+    SendBufConfig, Transport, TransportBind, TransportError,
 };
 
 struct NoopPool {
@@ -73,7 +73,7 @@ struct NoopFrame<'a> {
     bytes: &'a [u8],
 }
 
-impl<'a> AsPayload for NoopFrame<'a> {
+impl AsPayload for NoopFrame<'_> {
     fn payload(&self) -> &[u8] {
         self.bytes
     }
@@ -118,6 +118,7 @@ impl TransportBind for PooledNoopTransport {
     async fn bind_udp(
         _bind: BindConfig,
         _rx: RecvBufConfig,
+        _tx: SendBufConfig,
         _ring: RingConfig,
         _batch: BatchConfig,
     ) -> Result<Self, TransportError> {
@@ -126,7 +127,12 @@ impl TransportBind for PooledNoopTransport {
         })
     }
 
-    async fn connect_tcp(_bind: BindConfig, _ring: RingConfig) -> Result<Self, TransportError> {
+    async fn connect_tcp(
+        _bind: BindConfig,
+        _rx: RecvBufConfig,
+        _tx: SendBufConfig,
+        _ring: RingConfig,
+    ) -> Result<Self, TransportError> {
         Ok(Self {
             pool: NoopPool::new(4),
         })
@@ -142,6 +148,7 @@ async fn bind_udp_returns_owned_transport() {
     let t = PooledNoopTransport::bind_udp(
         BindConfig::default(),
         RecvBufConfig::default(),
+        SendBufConfig::default(),
         RingConfig::default(),
         BatchConfig::default(),
     )
@@ -154,8 +161,13 @@ async fn bind_udp_returns_owned_transport() {
 
 #[tokio::test]
 async fn connect_tcp_returns_owned_transport() {
-    let t = PooledNoopTransport::connect_tcp(BindConfig::default(), RingConfig::default())
-        .await
-        .expect("connect ok");
+    let t = PooledNoopTransport::connect_tcp(
+        BindConfig::default(),
+        RecvBufConfig::default(),
+        SendBufConfig::default(),
+        RingConfig::default(),
+    )
+    .await
+    .expect("connect ok");
     assert_eq!(t.pool().in_use(), 0);
 }

@@ -1,7 +1,9 @@
 //! Runs the shared conformance suite against a backend. Each case has a
-//! stable name so failures line up across backends in CI dashboards.
+//! stable name so failures line up across backends in CI dashboards. TCP
+//! peer is spun up on `127.0.0.1:0` for the duration of the suite so
+//! `connect_tcp` has something to talk to.
 
-use crate::config::{BatchConfig, BindConfig, RecvBufConfig, RingConfig};
+use crate::config::{BatchConfig, BindConfig, RecvBufConfig, RingConfig, SendBufConfig};
 use crate::ext::TransportBind;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -46,6 +48,7 @@ pub async fn run_conformance_suite<T: TransportBind>() -> ConformanceReport {
     let bind_res = T::bind_udp(
         BindConfig::default(),
         RecvBufConfig::default(),
+        SendBufConfig::default(),
         RingConfig::default(),
         BatchConfig::default(),
     )
@@ -66,8 +69,37 @@ pub async fn run_conformance_suite<T: TransportBind>() -> ConformanceReport {
     }
     report.record(ConformanceCase::BindUdp, bind_res.map(|_| ()));
 
-    let tcp_res = T::connect_tcp(BindConfig::default(), RingConfig::default()).await;
-    report.record(ConformanceCase::ConnectTcp, tcp_res.map(|_| ()));
+    let tcp_res = spin_tcp_peer_and_connect::<T>().await;
+    report.record(ConformanceCase::ConnectTcp, tcp_res);
 
     report
+}
+
+async fn spin_tcp_peer_and_connect<T: TransportBind>() -> Result<(), String> {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+        .await
+        .map_err(|e| format!("conformance listener bind failed: {e}"))?;
+    let addr = listener
+        .local_addr()
+        .map_err(|e| format!("conformance listener local_addr failed: {e}"))?;
+    let accept_task = tokio::spawn(async move {
+        let _ = listener.accept().await;
+    });
+
+    let bind_cfg = BindConfig {
+        addr,
+        ..Default::default()
+    };
+    let res = T::connect_tcp(
+        bind_cfg,
+        RecvBufConfig::default(),
+        SendBufConfig::default(),
+        RingConfig::default(),
+    )
+    .await
+    .map(|_| ())
+    .map_err(|e| e.to_string());
+
+    let _ = accept_task.await;
+    res
 }

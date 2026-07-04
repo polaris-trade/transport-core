@@ -2,7 +2,7 @@
 //! `Transport` shape: `PoolAccess` exposes the backend's `BufferPool`;
 //! `TransportBind` supplies the async constructors receivers call.
 
-use crate::config::{BatchConfig, BindConfig, RecvBufConfig, RingConfig};
+use crate::config::{BatchConfig, BindConfig, RecvBufConfig, RingConfig, SendBufConfig};
 use crate::error::TransportError;
 use crate::pool::BufferPool;
 use crate::transport::Transport;
@@ -17,6 +17,7 @@ pub trait TransportBind: Transport {
     fn bind_udp(
         bind: BindConfig,
         rx: RecvBufConfig,
+        tx: SendBufConfig,
         ring: RingConfig,
         batch: BatchConfig,
     ) -> impl core::future::Future<Output = Result<Self, TransportError>> + Send
@@ -25,6 +26,8 @@ pub trait TransportBind: Transport {
 
     fn connect_tcp(
         bind: BindConfig,
+        rx: RecvBufConfig,
+        tx: SendBufConfig,
         ring: RingConfig,
     ) -> impl core::future::Future<Output = Result<Self, TransportError>> + Send
     where

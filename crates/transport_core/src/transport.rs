@@ -29,6 +29,26 @@ pub trait AsPayload {
     fn stream_id(&self) -> u8;
 }
 
+/// Frames from timestamping-capable backends expose the recv timestamp.
+/// Kept separate from [`AsPayload`] so the common shape stays lean; protocol
+/// code that needs timestamps bounds `T::Frame: TimestampedPayload`.
+pub trait TimestampedPayload: AsPayload {
+    fn timestamp(&self) -> Option<Timestamp>;
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Timestamp {
+    pub nanos: u64,
+    pub source: TimestampSource,
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum TimestampSource {
+    #[default]
+    KernelSw,
+    HardwareRx,
+}
+
 pub trait UdpTransport: Transport {
     fn join_multicast(
         &mut self,
