@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.2.0](https://github.com/polaris-trade/transport-core/compare/transport_core-v0.1.0...transport_core-v0.2.0) - 2026-07-04
+
+### Documentation
+
+- *(changelog)* Manual fix changelog ([#6](https://github.com/polaris-trade/transport-core/pull/6))
+
+- *(changelog)* Manual fix changelog ([#5](https://github.com/polaris-trade/transport-core/pull/5))
+
+
+### Features
+
+- *(transport-core)* Add perf-config, TimestampedPayload, and TCP conformance peer ([#7](https://github.com/polaris-trade/transport-core/pull/7))
+
+Rework the config layer for UDP + TCP tuning and tighten the conformance suite so backends can be validated end-to-end without external scaffolding.
+
+
 ## [0.1.0](https://github.com/polaris-trade/transport-core/releases/tag/transport_core-v0.1.0) - 2026-07-03
 
 ### Features
