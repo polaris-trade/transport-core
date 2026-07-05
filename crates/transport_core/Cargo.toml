@@ -9,6 +9,7 @@ repository.workspace = true
 homepage.workspace = true
 license = "MIT OR Apache-2.0"
 readme = "README.md"
+publish = ["polaris"]
 keywords = ["networking", "transport", "trait", "buffer-pool"]
 categories = ["network-programming", "asynchronous"]
 
