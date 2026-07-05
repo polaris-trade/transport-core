@@ -24,3 +24,11 @@ fastrand = "2.1.2"
 tracing = "0.1.44"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.150"
+
+# High-performance release profile. See root AGENTS.md#High-Performance Rules.
+# Cross-crate inlining + one codegen unit + abort-on-panic. Slower compile,
+# faster runtime, smaller binary. Consumers may override in their own workspace.
+[profile.release]
+lto = "fat"
+codegen-units = 1
+panic = "abort"
