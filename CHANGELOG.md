@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.2.2](https://github.com/polaris-trade/transport-core/compare/transport_core-v0.2.1...transport_core-v0.2.2) - 2026-07-07
+
+### Features
+
+- *(transport-core)* Implement owned-frame batch recv ([#19](https://github.com/polaris-trade/transport-core/pull/19))
+
+
+  Replace the Transport trait (borrowed &self frames) with a sync,
+batch-first recv API. DatagramSource::recv_burst hands back owned
+frames in a reusable FrameBatch; StreamSource::recv_into covers TCP.
+Frames own their pool slab and are Send, so they outlive the recv call
+and move across threads without a copy. Every backend can hit this
+shape, so clients won't need a rewrite as we add more.
+
+
 ## [0.2.1](https://github.com/polaris-trade/transport-core/compare/transport_core-v0.2.0...transport_core-v0.2.1) - 2026-07-07
 
 ### Refactor
