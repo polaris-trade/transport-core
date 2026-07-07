@@ -2,17 +2,24 @@
 
 Core crate holding the `Transport` trait, `BufferPool` contract, shared `TransportError`, and config primitives. Every backend (`transport-tokio`, `transport-mio`, and future `transport-*`) and every protocol client (`client-moldudp`, `client-soupbintcp`) depends on this crate only; no I/O syscalls happen here.
 
-## Layout
+## Scope
 
-Single-crate Cargo workspace. Room for adjacent helper crates (`crates/transport_core_testing`, etc.) as they land.
+- `TransportError` — shared error type; backends map internal failures here, protocol crates wrap via `#[from]`.
+- Config primitives — `BindConfig`, `RecvBufConfig`, `RingConfig`, `BatchConfig`, `AffinityConfig`, `HugepageSize`. Serde-derived, format-agnostic. Callers pick JSON, YAML, or anything else at load time.
+- `Transport` trait + `BufferPool` contract.
 
-```
-transport-core/
-├── crates/
-│   └── transport_core/    # the trait contract crate itself
-├── lat.md/                # architecture knowledge graph
-├── specs/                 # spec-driven artifacts (migration + design)
-└── docs/                  # wire-format specs (MoldUDP64, SoupBinTCP)
+## Usage
+
+```rust
+use transport_core::{BindConfig, RecvBufConfig, RingConfig, TransportError};
+
+fn build_bind() -> BindConfig {
+    BindConfig {
+        addr: "0.0.0.0:4242".parse().unwrap(),
+        reuse_addr: true,
+        reuse_port: true,
+    }
+}
 ```
 
 ## Dev commands
@@ -27,7 +34,6 @@ MSRV: `1.96.0` (pinned in `rust-toolchain.toml`).
 
 ## Docs
 
-- Crate-level usage → [`crates/transport_core/README.md`](crates/transport_core/README.md)
 - Architecture concepts → [`lat.md/lat.md`](lat.md/lat.md)
 - Active spec → [`specs/`](specs/)
 

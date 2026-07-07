@@ -1,29 +1,35 @@
-[workspace]
-resolver = "3"
-members = ["crates/*"]
-
-[workspace.package]
+[package]
+name = "transport_core"
+description = "Trait contract for networking stacks: Transport, BufferPool, config, shared error"
+version = "0.2.0"
 edition = "2024"
 rust-version = "1.96.0"
 authors = ["0x67 <69191110+0x67@users.noreply.github.com>"]
 repository = "https://github.com/polaris-trade/transport-core"
 homepage = "https://github.com/polaris-trade"
 license = "MIT OR Apache-2.0"
+readme = "README.md"
+publish = ["polaris"]
+keywords = ["networking", "transport", "trait", "buffer-pool"]
+categories = ["network-programming", "asynchronous"]
 
-[workspace.dependencies]
-# Internal deps — add path-based entries as new members land under crates/*:
-transport_core = { path = "crates/transport_core" }
-
-# External deps — minimal, opinionated defaults. Add or remove freely.
-anyhow = "1.0.103"
-thiserror = "2.0.18"
-mockall = "0.15"
-rstest = "0.26.1"
-tokio = { version = "1.52.3", features = ["macros", "rt-multi-thread"] }
-fastrand = "2.1.2"
-tracing = "0.1.44"
+[dependencies]
+# Serde-derived config primitives ship as JSON/YAML/etc via caller-picked loader.
 serde = { version = "1.0.228", features = ["derive"] }
+# Backend + protocol crates wrap `TransportError` via `#[from]`.
+thiserror = "2.0.18"
+# `testing` feature pulls tokio for MockPeer sockets + fastrand for drop/jitter.
+tokio = { version = "1.52.3", features = ["rt-multi-thread", "net", "time", "sync", "io-util", "macros"], optional = true }
+fastrand = { version = "2.1.2", optional = true }
+
+[features]
+default = []
+testing = ["dep:tokio", "dep:fastrand"]
+
+[dev-dependencies]
 serde_json = "1.0.150"
+# `#[tokio::test]` drives async trait-shape + conformance checks.
+tokio = { version = "1.52.3", features = ["macros", "rt", "rt-multi-thread", "net", "time"] }
 
 # High-performance release profile. See root AGENTS.md#High-Performance Rules.
 # Cross-crate inlining + one codegen unit + abort-on-panic. Slower compile,
