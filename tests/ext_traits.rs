@@ -4,10 +4,9 @@
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::task::{Context, Poll};
 use transport_core::{
-    AsPayload, BatchConfig, BindConfig, BufferPool, PoolAccess, RecvBufConfig, RingConfig,
-    SendBufConfig, Transport, TransportBind, TransportError,
+    AffinityConfig, BatchConfig, BindConfig, BufferPool, PoolAccess, RecvBufConfig, RingConfig,
+    SendBufConfig, TransportBind, TransportCore, TransportError,
 };
 
 struct NoopPool {
@@ -69,34 +68,7 @@ struct PooledNoopTransport {
     pool: NoopPool,
 }
 
-struct NoopFrame<'a> {
-    bytes: &'a [u8],
-}
-
-impl AsPayload for NoopFrame<'_> {
-    fn payload(&self) -> &[u8] {
-        self.bytes
-    }
-    fn sequence(&self) -> u64 {
-        0
-    }
-    fn stream_id(&self) -> u8 {
-        0
-    }
-}
-
-impl Transport for PooledNoopTransport {
-    type Frame<'a> = NoopFrame<'a>;
-    type Event = ();
-
-    fn poll_event(&mut self, _cx: &mut Context<'_>) -> Poll<Result<(), TransportError>> {
-        Poll::Ready(Ok(()))
-    }
-
-    fn next_frame(&self) -> Option<NoopFrame<'_>> {
-        None
-    }
-
+impl TransportCore for PooledNoopTransport {
     fn name(&self) -> &'static str {
         "pooled-noop"
     }
@@ -121,6 +93,7 @@ impl TransportBind for PooledNoopTransport {
         _tx: SendBufConfig,
         _ring: RingConfig,
         _batch: BatchConfig,
+        _affinity: AffinityConfig,
     ) -> Result<Self, TransportError> {
         Ok(Self {
             pool: NoopPool::new(4),
@@ -132,6 +105,7 @@ impl TransportBind for PooledNoopTransport {
         _rx: RecvBufConfig,
         _tx: SendBufConfig,
         _ring: RingConfig,
+        _affinity: AffinityConfig,
     ) -> Result<Self, TransportError> {
         Ok(Self {
             pool: NoopPool::new(4),
@@ -151,6 +125,7 @@ async fn bind_udp_returns_owned_transport() {
         SendBufConfig::default(),
         RingConfig::default(),
         BatchConfig::default(),
+        AffinityConfig::default(),
     )
     .await
     .expect("bind ok");
@@ -166,6 +141,7 @@ async fn connect_tcp_returns_owned_transport() {
         RecvBufConfig::default(),
         SendBufConfig::default(),
         RingConfig::default(),
+        AffinityConfig::default(),
     )
     .await
     .expect("connect ok");

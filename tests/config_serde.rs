@@ -36,6 +36,7 @@ fn recv_buf_config_json_roundtrip() {
     cfg.so_rxq_ovfl = true;
     cfg.so_timestamping = TimestampMode::HardwareRx;
     cfg.so_busy_poll_us = Some(50);
+    cfg.read_chunk = Some(64 * 1024);
     json_roundtrip(&cfg);
 }
 
@@ -97,4 +98,12 @@ fn recv_buf_config_deserializes_without_new_fields() {
     assert_eq!(cfg.so_rcvbuf, Some(1024));
     assert_eq!(cfg.so_timestamping, TimestampMode::None);
     assert!(cfg.so_busy_poll_us.is_none());
+    assert!(cfg.read_chunk.is_none());
+}
+
+#[test]
+fn ring_config_default_slab_count_is_1024() {
+    // Stays 1024: clients derive a larger reorder window themselves rather than
+    // inflating this global default (a TCP pool never draws slabs).
+    assert_eq!(RingConfig::default().slab_count, 1024);
 }
