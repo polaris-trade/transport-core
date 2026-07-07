@@ -9,7 +9,7 @@ repository = "https://github.com/polaris-trade/transport-core"
 homepage = "https://github.com/polaris-trade"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
-publish = ["polaris"]
+publish = false
 keywords = ["networking", "transport", "trait", "buffer-pool"]
 categories = ["network-programming", "asynchronous"]
 
