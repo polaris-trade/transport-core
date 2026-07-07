@@ -41,6 +41,11 @@ pub struct RecvBufConfig {
     pub so_timestamping: TimestampMode,
     #[serde(default)]
     pub so_busy_poll_us: Option<u32>,
+    /// Max bytes a stream backend lands per `recv_into` call. `None` = the
+    /// backend's own default. Bounds one TCP landing; streams have no
+    /// `recvmmsg`-style batch, so this replaces `BatchConfig` on the read path.
+    #[serde(default)]
+    pub read_chunk: Option<usize>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -62,6 +67,10 @@ pub enum TimestampMode {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[non_exhaustive]
 pub struct RingConfig {
+    /// Buffer count. Default stays 1024. A client needing a larger reorder
+    /// window (see client-moldudp) derives its own `slab_count` from that
+    /// window and asserts pool capacity at construction, rather than inflating
+    /// this global default for every backend (a TCP pool never draws slabs).
     pub slab_count: usize,
     pub slab_size: usize,
     pub sqpoll: bool,

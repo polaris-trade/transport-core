@@ -30,7 +30,7 @@ cargo clippy --workspace --all-targets -- -D warnings
 lat check
 ```
 
-MSRV: `1.96.0` (pinned in `rust-toolchain.toml`).
+MSRV: `1.96.1` (pinned in `rust-toolchain.toml`).
 
 ## Docs
 

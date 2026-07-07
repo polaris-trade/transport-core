@@ -17,6 +17,6 @@ pub use error::TransportError;
 pub use ext::{PoolAccess, TransportBind};
 pub use pool::{BufferPool, SharedPool};
 pub use transport::{
-    AsPayload, MulticastInterface, Timestamp, TimestampSource, TimestampedPayload, Transport,
-    UdpTransport,
+    AsPayload, AsyncReady, DatagramSource, FrameBatch, MulticastInterface, RecvFrame, StreamSource,
+    Timestamp, TimestampSource, TimestampedPayload, TransportCore, UdpTransport,
 };

@@ -41,20 +41,23 @@ fn ring_full_display() {
 #[test]
 fn backend_unavailable_display() {
     let e = TransportError::BackendUnavailable {
-        name: "io-uring",
-        reason: "kernel < 5.19".into(),
+        name: "mock-backend",
+        reason: "resource unavailable".into(),
     };
-    assert_eq!(e.to_string(), "backend io-uring unavailable: kernel < 5.19");
+    assert_eq!(
+        e.to_string(),
+        "backend mock-backend unavailable: resource unavailable"
+    );
 }
 
 #[test]
 fn unsupported_display() {
     let e = TransportError::Unsupported {
-        name: "dpdk",
-        reason: "multicast join not implemented",
+        name: "mock-backend",
+        reason: "multicast join not supported",
     };
     assert_eq!(
         e.to_string(),
-        "operation not supported by dpdk: multicast join not implemented"
+        "operation not supported by mock-backend: multicast join not supported"
     );
 }
