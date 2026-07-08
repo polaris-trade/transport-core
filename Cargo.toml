@@ -1,6 +1,6 @@
 [package]
 name = "transport_core"
-description = "Trait contract for networking stacks: Transport, BufferPool, config, shared error"
+description = "Backend-agnostic recv-seam traits, BufferPool contract, config, and shared error for networking stacks"
 version = "0.3.0"
 edition = "2024"
 rust-version = "1.96.1"
