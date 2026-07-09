@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.3.3](https://github.com/polaris-trade/transport-core/compare/transport_core-v0.3.2...transport_core-v0.3.3) (2026-07-09)
+
+
+### Documentation
+
+* **transport:** pin the recv_into EOF contract on StreamSource ([#26](https://github.com/polaris-trade/transport-core/issues/26)) ([71dd9b8](https://github.com/polaris-trade/transport-core/commit/71dd9b866ce5e144200cd0450ef07782a0acd4a1))
+
 ## [0.3.2](https://github.com/polaris-trade/transport-core/compare/transport_core-v0.3.1...transport_core-v0.3.2) (2026-07-09)
 
 
