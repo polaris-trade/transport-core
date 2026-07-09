@@ -151,8 +151,10 @@ pub trait DatagramSource: TransportCore {
 
 /// Byte-stream recv. `recv_into` lands bytes once into caller-owned `dst`
 /// (typically the uninitialised spare capacity of a decode buffer) and returns
-/// the count written. `Ok(0)` means nothing was ready. The caller marks exactly
-/// `n` returned bytes initialised.
+/// the count written. `Ok(0)` means nothing was ready (would-block); the caller
+/// retries after `AsyncReady::ready`. Peer close MUST surface as `Err`
+/// (`UnexpectedEof`), never `Ok(0)`, so a reader loop terminates instead of
+/// spinning. The caller marks exactly `n` returned bytes initialised.
 pub trait StreamSource: TransportCore {
     fn recv_into(&mut self, dst: &mut [MaybeUninit<u8>]) -> Result<usize, TransportError>;
 }
