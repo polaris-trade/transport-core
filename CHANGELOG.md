@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.3.1](https://github.com/polaris-trade/transport-core/compare/transport_core-v0.3.0...transport_core-v0.3.1) (2026-07-09)
+
+
+### Build
+
+* **deps:** resolve transport_core from git tag, drop stale patch.unused ([#22](https://github.com/polaris-trade/transport-core/issues/22)) ([afc0201](https://github.com/polaris-trade/transport-core/commit/afc020138f932c85d34e8dae0c7caa4ad85ae4db))
+
 ## [0.3.0](https://github.com/polaris-trade/transport-core/compare/transport_core-v0.2.1...transport_core-v0.3.0) - 2026-07-07
 
 ### Features
