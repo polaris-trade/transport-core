@@ -10,7 +10,7 @@ The construction suite auto-spins a `127.0.0.1:0` TCP listener via [[src/testing
 
 [[src/testing/conformance.rs#ConformanceReport]] holds `passed` + `failed` case labels. [[src/testing/conformance.rs#ConformanceCase]] enumerates the stable case names.
 
-[[src/testing/conformance.rs#run_datagram_source]] is the recv-contract suite, generic over a backend's `DatagramSource` + `PoolAccess` and driven by a `build(count)` factory (real peer or in-process mock). It asserts burst count `<= max`, single = burst of 1, a drained source returns `Ok(0)`, pool slab reclaim even when a frame is dropped on another thread (single-producer ring backends drain their return queue on the next `recv_burst`), and `PoolExhausted` when the pool is empty with data pending. [[src/testing/conformance.rs#DatagramConformanceReport]] + [[src/testing/conformance.rs#DatagramCase]] mirror the construction suite's report shape.
+[[src/testing/conformance.rs#run_datagram_source]] is the recv-contract suite, generic over a backend's `DatagramSource` + `PoolAccess` and driven by a `build(count)` factory (real peer or in-process mock). It asserts burst count `<= max`, single is a burst of exactly 1 (bounded 8-iteration retry to tolerate a backend whose reclaim/readiness lags one tick, not to mask a broken one), a drained source returns `Ok(0)`, pool slab reclaim even when a frame is dropped on another thread (single-producer ring backends drain their return queue on the next `recv_burst`), and `PoolExhausted` when the pool is empty with data pending. [[src/testing/conformance.rs#DatagramConformanceReport]] + [[src/testing/conformance.rs#DatagramCase]] mirror the construction suite's report shape.
 
 [[src/testing/mock_peer.rs#MockPeer]] binds a real `127.0.0.1:0` socket (kind picked by [[src/testing/mock_peer.rs#MockKind]]) and drives a scripted [[src/testing/mock_peer.rs#MockAction]] list: send mock MoldUDP data/heartbeat, send SoupBinTCP frame, read + assert client-written bytes, sleep. `drop_rate` + `jitter` fields inject synthetic loss/latency.
 
@@ -21,6 +21,8 @@ The construction suite auto-spins a `127.0.0.1:0` TCP listener via [[src/testing
 [[src/transport.rs#TransportCore]] is the common base every backend implements: `name()` plus an async `send`. Recv splits into two sync extensions so datagram and stream shapes stay honest, with an optional async adapter on top.
 
 [[src/transport.rs#DatagramSource]] is the discrete-datagram recv: `recv_burst(out, max)` reaps up to `max` owned frames into a caller-preallocated [[src/transport.rs#FrameBatch]] and returns the count. `Ok(0)` = nothing ready; `PoolExhausted` = backpressure. Single recv is a burst of 1.
+
+[[tests/trait_shape.rs#framebatch_reuse_zero_alloc]] proves the zero-alloc reuse claim with `allocation-counter`: an in-process mock clones a preallocated `Arc` payload per frame (refcount bump, no heap traffic) across several `recv_burst`/`drain` cycles over one `FrameBatch`, first cycle as warmup, and asserts 0 allocations over the rest.
 
 [[src/transport.rs#StreamSource]] is the byte-stream recv: `recv_into(dst)` lands bytes once into caller-owned `MaybeUninit` spare capacity and returns the count written.
 

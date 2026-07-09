@@ -5,11 +5,12 @@
 //! `AsyncReady` is an optional readiness adapter so the sync core never carries
 //! a waker. Protocols stay generic over `DatagramSource`/`StreamSource`.
 
-use crate::error::TransportError;
-use core::future::Future;
-use core::mem::MaybeUninit;
-use serde::{Deserialize, Serialize};
+use core::{future::Future, mem::MaybeUninit};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+
+use serde::{Deserialize, Serialize};
+
+use crate::error::TransportError;
 
 /// Bytes-plus-metadata shape protocol code reads from a received frame.
 /// Backend frames implement it directly; protocol frames re-implement it after
@@ -88,12 +89,10 @@ pub trait TransportCore {
     fn send(&mut self, buf: &[u8]) -> impl Future<Output = Result<(), TransportError>> + Send;
 }
 
-/// Discrete-datagram recv.
-///
-/// `recv_burst` reaps up to `max` datagrams into the caller's `FrameBatch`, each
-/// frame owning a pool slab (zero-copy), and returns the count reaped. `Ok(0)`
-/// means nothing was ready (retry). `Err(TransportError::PoolExhausted)` means
-/// backpressure: stop reaping and let the kernel drop.
+/// Discrete-datagram recv. `recv_burst` reaps up to `max` datagrams into the
+/// caller's `FrameBatch`, each frame owning a pool slab (zero-copy), and
+/// returns the count reaped. `Ok(0)` means nothing ready (retry);
+/// `Err(TransportError::PoolExhausted)` means backpressure, stop reaping.
 ///
 /// # Example: an owned frame crosses a thread boundary
 /// ```

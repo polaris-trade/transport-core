@@ -3,13 +3,13 @@
 //! peer is spun up on `127.0.0.1:0` for the duration of the suite so
 //! `connect_tcp` has something to talk to.
 
-use crate::config::{
-    AffinityConfig, BatchConfig, BindConfig, RecvBufConfig, RingConfig, SendBufConfig,
+use crate::{
+    config::{AffinityConfig, BatchConfig, BindConfig, RecvBufConfig, RingConfig, SendBufConfig},
+    error::TransportError,
+    ext::{PoolAccess, TransportBind},
+    pool::BufferPool,
+    transport::{DatagramSource, FrameBatch},
 };
-use crate::error::TransportError;
-use crate::ext::{PoolAccess, TransportBind};
-use crate::pool::BufferPool;
-use crate::transport::{DatagramSource, FrameBatch};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ConformanceCase {
@@ -154,18 +154,14 @@ impl DatagramConformanceReport {
 }
 
 /// Drive a backend's [`DatagramSource`] through the recv contract, naming no
-/// backend crate. `build(count)` returns a source pre-loaded with `count`
-/// reap-able datagrams sharing one pool; a real backend implements it by
-/// binding and having a peer send, an in-process test by canned frames. The
-/// pool must have room for at least `count` slabs plus a few for the exhaustion
-/// case.
+/// backend crate. `build(count)` preloads `count` reap-able datagrams on one
+/// pool with room for `count` slabs plus a few spare for exhaustion.
 ///
-/// Asserts: `recv_burst` count `<= max`; single recv is a burst of 1; a drained
-/// source returns `Ok(0)`; a reaped frame is `Send + 'static` and its pool slab
-/// is reclaimed even when the frame is dropped on another thread (the
-/// single-producer ring backends satisfy this via their internal return queue,
-/// drained on the next `recv_burst`); an empty pool with data pending yields
-/// `PoolExhausted`, not `Ok(0)`.
+/// Asserts: burst count `<= max` and single recv is a burst of exactly 1; a
+/// drained source returns `Ok(0)`; a reaped frame is `Send + 'static` and its
+/// pool slab reclaims even when dropped off-thread (via a backend's internal
+/// return queue drained on the next `recv_burst`); empty pool with data
+/// pending yields `PoolExhausted`, not `Ok(0)`.
 pub fn run_datagram_source<T, B>(build: B) -> DatagramConformanceReport
 where
     T: DatagramSource + PoolAccess,
@@ -213,10 +209,18 @@ where
 {
     let mut src = build(3);
     let mut batch = FrameBatch::with_capacity(64);
-    let n = src.recv_burst(&mut batch, 1).map_err(|e| e.to_string())?;
-    if n > 1 {
+    // build(3) guarantees data ready. Bounded retry covers reclaim lag, not
+    // a backend that never actually surfaces a single datagram.
+    let mut n = 0;
+    for _ in 0..8 {
+        n = src.recv_burst(&mut batch, 1).map_err(|e| e.to_string())?;
+        if n > 0 {
+            break;
+        }
+    }
+    if n != 1 {
         return Err(format!(
-            "single recv (max=1) returned {n}, not a burst of 1"
+            "single recv (max=1) returned {n} after retries, not a burst of 1"
         ));
     }
     Ok(())
@@ -317,11 +321,16 @@ where
 
 #[cfg(test)]
 mod tests {
+    use std::{
+        collections::VecDeque,
+        sync::{
+            Arc,
+            atomic::{AtomicUsize, Ordering},
+        },
+    };
+
     use super::*;
     use crate::transport::{AsPayload, TransportCore};
-    use std::collections::VecDeque;
-    use std::sync::Arc;
-    use std::sync::atomic::{AtomicUsize, Ordering};
 
     struct MockPool {
         capacity: usize,
