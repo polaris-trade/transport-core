@@ -43,6 +43,7 @@ tokio = { version = "1.52.3", features = [
   "net",
   "time",
 ] }
+allocation-counter = "0.8.1"
 
 # High-performance release profile. See root AGENTS.md#High-Performance Rules.
 # Cross-crate inlining + one codegen unit + abort-on-panic. Slower compile,

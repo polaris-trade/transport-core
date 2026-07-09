@@ -2,8 +2,11 @@
 //! pooled stand-in transport. Locks the constructor + pool-accessor
 //! signatures so backends stay uniform.
 
-use std::sync::Arc;
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::{
+    Arc,
+    atomic::{AtomicUsize, Ordering},
+};
+
 use transport_core::{
     AffinityConfig, BatchConfig, BindConfig, BufferPool, PoolAccess, RecvBufConfig, RingConfig,
     SendBufConfig, TransportBind, TransportCore, TransportError,

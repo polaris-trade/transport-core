@@ -2,12 +2,12 @@
 //! `TransportCore` shape: `PoolAccess` exposes the backend's `BufferPool`;
 //! `TransportBind` supplies the async constructors receivers call.
 
-use crate::config::{
-    AffinityConfig, BatchConfig, BindConfig, RecvBufConfig, RingConfig, SendBufConfig,
+use crate::{
+    config::{AffinityConfig, BatchConfig, BindConfig, RecvBufConfig, RingConfig, SendBufConfig},
+    error::TransportError,
+    pool::BufferPool,
+    transport::TransportCore,
 };
-use crate::error::TransportError;
-use crate::pool::BufferPool;
-use crate::transport::TransportCore;
 
 /// Exposes the backend's [`BufferPool`] so a receiver can size its reorder
 /// window and read pressure. Recv acquires a slab from this pool; the yielded

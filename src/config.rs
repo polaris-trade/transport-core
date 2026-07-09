@@ -1,8 +1,9 @@
 //! Config primitives shared across every backend. Serde-first so app configs
 //! ship as JSON or TOML.
 
-use serde::{Deserialize, Serialize};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[non_exhaustive]

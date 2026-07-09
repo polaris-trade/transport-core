@@ -3,8 +3,13 @@
 //! `StreamSource` + `AsyncReady` + `UdpTransport`. Locks the trait signatures
 //! so downstream backend crates don't drift.
 
-use std::mem::MaybeUninit;
-use std::net::{IpAddr, SocketAddr};
+use std::{
+    hint::black_box,
+    mem::MaybeUninit,
+    net::{IpAddr, SocketAddr},
+    sync::Arc,
+};
+
 use transport_core::{
     AsPayload, AsyncReady, DatagramSource, FrameBatch, MulticastInterface, RecvFrame, StreamSource,
     TransportCore, TransportError, UdpTransport,
@@ -154,4 +159,112 @@ fn frame_payload_shape() {
     assert_eq!(f.payload(), b"hello");
     assert_eq!(f.sequence(), 42);
     assert_eq!(f.stream_id(), 1);
+}
+
+const ALLOC_FREE_PAYLOAD_LEN: usize = 64;
+const ALLOC_FREE_BATCH: usize = 8;
+const ALLOC_FREE_CYCLES: usize = 4;
+
+/// Frame for the alloc-free harness below. `data` clones a shared `Arc`
+/// (refcount bump only) instead of owning a fresh heap buffer per frame.
+struct AllocFreeFrame {
+    data: Arc<[u8; ALLOC_FREE_PAYLOAD_LEN]>,
+    sequence: u64,
+}
+
+impl AsPayload for AllocFreeFrame {
+    fn payload(&self) -> &[u8] {
+        self.data.as_ref()
+    }
+    fn sequence(&self) -> u64 {
+        self.sequence
+    }
+    fn stream_id(&self) -> u8 {
+        0
+    }
+}
+
+/// In-process `DatagramSource` mock whose steady-state `recv_burst` never
+/// touches the heap: it clones a preallocated `Arc` template into each frame
+/// instead of building fresh bytes per call, mimicking a warm pool slab.
+struct AllocFreeSource {
+    template: Arc<[u8; ALLOC_FREE_PAYLOAD_LEN]>,
+    remaining: usize,
+    sequence: u64,
+}
+
+impl TransportCore for AllocFreeSource {
+    fn name(&self) -> &'static str {
+        "alloc-free-mock"
+    }
+
+    async fn send(&mut self, _buf: &[u8]) -> Result<(), TransportError> {
+        Ok(())
+    }
+}
+
+impl DatagramSource for AllocFreeSource {
+    type Frame = AllocFreeFrame;
+
+    fn recv_burst(
+        &mut self,
+        out: &mut FrameBatch<AllocFreeFrame>,
+        max: usize,
+    ) -> Result<usize, TransportError> {
+        let n = max.min(self.remaining);
+        for _ in 0..n {
+            out.push(AllocFreeFrame {
+                data: Arc::clone(&self.template),
+                sequence: self.sequence,
+            });
+            self.sequence += 1;
+        }
+        self.remaining -= n;
+        Ok(n)
+    }
+}
+
+/// Reused `FrameBatch` adds 0 allocations per reap: the batch's backing `Vec`
+/// is preallocated once and `drain` keeps its capacity, and the mock source
+/// clones a preallocated `Arc` payload rather than allocating fresh bytes.
+/// First cycle is a warmup (pages in the mock, drains once) outside the
+/// measured region so cold-start cost doesn't count against the assert.
+#[test]
+fn framebatch_reuse_zero_alloc() {
+    let mut source = AllocFreeSource {
+        template: Arc::new([0u8; ALLOC_FREE_PAYLOAD_LEN]),
+        remaining: 0,
+        sequence: 0,
+    };
+    let mut batch: FrameBatch<AllocFreeFrame> = FrameBatch::with_capacity(ALLOC_FREE_BATCH);
+
+    source.remaining = ALLOC_FREE_BATCH;
+    let warmup = source
+        .recv_burst(&mut batch, ALLOC_FREE_BATCH)
+        .expect("warmup recv");
+    assert_eq!(warmup, ALLOC_FREE_BATCH);
+    for frame in batch.drain() {
+        black_box(frame.payload().len());
+    }
+
+    let alloc_info = allocation_counter::measure(|| {
+        for _ in 0..(ALLOC_FREE_CYCLES - 1) {
+            source.remaining = ALLOC_FREE_BATCH;
+            let n = source
+                .recv_burst(&mut batch, ALLOC_FREE_BATCH)
+                .expect("steady-state recv");
+            assert_eq!(n, ALLOC_FREE_BATCH);
+            for frame in batch.drain() {
+                black_box(frame.payload().len());
+            }
+        }
+    });
+
+    assert_eq!(
+        alloc_info.count_total,
+        0,
+        "framebatch reuse allocated {} times over {} steady-state cycles",
+        alloc_info.count_total,
+        ALLOC_FREE_CYCLES - 1
+    );
 }

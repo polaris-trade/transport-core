@@ -3,11 +3,12 @@
 //! Actions send mock MoldUDP or SoupBinTCP framed bytes and assert the
 //! transport's outbound writes.
 
-use std::net::SocketAddr;
-use std::ops::Range;
-use std::time::Duration;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::net::{TcpListener, UdpSocket};
+use std::{net::SocketAddr, ops::Range, time::Duration};
+
+use tokio::{
+    io::{AsyncReadExt, AsyncWriteExt},
+    net::{TcpListener, UdpSocket},
+};
 
 const MOCK_SESSION: [u8; 10] = *b"MOCKPEER01";
 

@@ -6,6 +6,7 @@
 //! `let mut cfg = T::default(); cfg.field = ...;`.
 
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+
 use transport_core::{
     AffinityConfig, BatchConfig, BindConfig, HugepageSize, RecvBufConfig, RingConfig,
     SendBufConfig, TimestampMode,

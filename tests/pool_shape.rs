@@ -2,8 +2,11 @@
 //! drop returns the slot to the free list. Lock the owned-handle
 //! ergonomics protocol code depends on.
 
-use std::sync::Arc;
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::{
+    Arc,
+    atomic::{AtomicUsize, Ordering},
+};
+
 use transport_core::BufferPool;
 
 struct NoopPool {
