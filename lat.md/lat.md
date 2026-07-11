@@ -16,6 +16,14 @@ The construction suite auto-spins a `127.0.0.1:0` TCP listener via [[src/testing
 
 [[src/testing/mock_peer.rs#MockRunReport]] returns `actions_completed`, `bytes_sent`, `bytes_dropped_synthetic` counters. [[src/testing/mock_peer.rs#MockPeerError]] carries structured failures: bind, I/O, missing UDP target, unmet expect assertions.
 
+## Recv telemetry seam (feature-gated)
+
+Feature `observability` adds a shared recv-counter seam so the five backends emit identical metric names from one place, not hand-rolled per backend. Off by default, keeping the lean seam for consumers that do not instrument.
+
+[[src/telemetry.rs#record_recv_burst]] takes a `backend` label plus `packets`/`bytes` and increments the two monotonic counters once per burst, guarded by `observability_core::metrics_enabled` so an off-gate call is one thread-local read with no atomic or alloc. [[src/telemetry.rs#record_recv_event]] increments a single named backend-owned event counter the same way.
+
+The universal metric names live in the `metric` submodule as consts (`transport.recv.packets`, `.bytes`), the one definition point every backend shares; backend-specific error counters are named by the backend that owns them and passed to `record_recv_event`. The crate re-exports `observability_core` under the same feature so backends reach the runtime gate through this one path rather than each pinning observability-core themselves.
+
 ## Transport trait
 
 [[src/transport.rs#TransportCore]] is the common base every backend implements: `name()` plus an async `send`. Recv splits into two sync extensions so datagram and stream shapes stay honest, with an optional async adapter on top.
@@ -26,7 +34,7 @@ The construction suite auto-spins a `127.0.0.1:0` TCP listener via [[src/testing
 
 [[src/transport.rs#StreamSource]] is the byte-stream recv: `recv_into(dst)` lands bytes once into caller-owned `MaybeUninit` spare capacity and returns the count written.
 
-[[src/transport.rs#AsyncReady]] is the optional readiness adapter: `ready().await` resolves when the next sync recv can progress. Busy-poll backends (DPDK) omit it so the sync core never carries a waker.
+[[src/transport.rs#AsyncReady]] is the optional readiness adapter: `ready().await` resolves when the next sync recv can progress. Busy-poll backends omit it so the sync core never carries a waker.
 
 [[src/transport.rs#RecvFrame]] is the owned-frame marker (`AsPayload + Send + 'static`), blanket-implemented. `payload()` borrows the handle, not the transport, so a frame outlives the recv call and moves across threads.
 
