@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.4.0](https://github.com/polaris-trade/transport-core/compare/transport_core-v0.3.3...transport_core-v0.4.0) (2026-07-11)
+
+
+### Features
+
+* **telemetry:** add recv-counter ([#28](https://github.com/polaris-trade/transport-core/issues/28)) ([c7d6d93](https://github.com/polaris-trade/transport-core/commit/c7d6d93b2b0233ce1326c4be88ae816b50803bf8))
+
 ## [0.3.3](https://github.com/polaris-trade/transport-core/compare/transport_core-v0.3.2...transport_core-v0.3.3) (2026-07-09)
 
 
