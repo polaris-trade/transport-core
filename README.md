@@ -1,3 +1,7 @@
+> **⚠️ Archived. This crate moved to [`polaris-trade/transports`](https://github.com/polaris-trade/transports).**
+>
+> `transport_core` now lives at [`crates/core`](https://github.com/polaris-trade/transports/tree/main/crates/core) in the `transports` workspace; new releases are cut there as `transport_core-vX.Y.Z`. Existing `transport_core-v*` tags on this repository stay resolvable for historical pins. This repository is read-only. Open issues and PRs against `transports`.
+
 # transport-core
 
 Backend-agnostic contract for the Polaris networking stack: the recv-seam
